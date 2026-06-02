@@ -1,0 +1,40 @@
+name: Deploy React Express Mongo App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: IT
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Sync Code to Server Project Path
+        run: |
+          DEPLOY_PATH="/home/devops/Project"
+
+          mkdir -p $DEPLOY_PATH
+
+          rsync -av --delete \
+            --exclude ".git" \
+            --exclude "node_modules" \
+            --exclude "frontend/node_modules" \
+            --exclude "backend/node_modules" \
+            --exclude "Dockerfiles" \
+            --exclude "docker-compose.yml" \
+            ./ $DEPLOY_PATH/
+
+      - name: Build and Run Containers Using Server Dockerfiles
+        run: |
+          DEPLOY_PATH="/home/devops/Project"
+
+          cd $DEPLOY_PATH
+
+          docker compose down
+          docker compose up -d --build
+
+      - name: Show Running Containers
+        run: |
+          docker ps
